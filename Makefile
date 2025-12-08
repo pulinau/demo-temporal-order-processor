@@ -9,10 +9,6 @@ tidy:
 	go mod tidy
 	go fmt ./...
 
-.PHONY: worker.start
-worker.start:
-	go run cmd/worker/main.go
-
 .PHONY: test
 test: bin
 	go test -v -race \
@@ -25,3 +21,6 @@ cover: test
 	@coverage=$$(go tool cover -func=$(COVERAGE_OUT) | grep total | awk '{print $$3}'); \
 	echo "Coverage: $${coverage}"
 
+.PHONY: worker.start
+worker.start:
+	go run cmd/worker/main.go

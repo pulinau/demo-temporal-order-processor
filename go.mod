@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
 	go.temporal.io/sdk v1.38.0
 )
