@@ -1,10 +1,10 @@
-package demotemporalorderprocessing_test
+package temporal_test
 
 import (
 	"testing"
 
 	"github.com/google/uuid"
-	demotemporalorderprocessing "github.com/pulinau/demo-temporal-order-processor"
+	"github.com/pulinau/demo-temporal-order-processor/internal/temporal"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
@@ -28,12 +28,12 @@ func (s *ActivityTestSuite) SetupTest() {
 }
 
 func (s *ActivityTestSuite) TestValidate_Success() {
-	activities := &demotemporalorderprocessing.OrderActivities{}
+	activities := &temporal.OrderActivities{}
 	s.env.RegisterActivity(activities.Validate)
 
-	in := demotemporalorderprocessing.Order{
+	in := temporal.Order{
 		ID: uuid.MustParse(dummyOrderID),
-		LineItems: []demotemporalorderprocessing.LineItem{
+		LineItems: []temporal.LineItem{
 			{
 				ProductID:    uuid.MustParse("ba320a5d-62ed-46d0-b491-084514598721"),
 				Quantity:     1,
@@ -51,19 +51,19 @@ func (s *ActivityTestSuite) TestValidate_Fail() {
 
 	tests := []struct {
 		name  string
-		input demotemporalorderprocessing.Order
+		input temporal.Order
 		err   string
 	}{
 		{
 			name:  "Missing order ID",
-			input: demotemporalorderprocessing.Order{},
+			input: temporal.Order{},
 			err:   "order must have a valid order ID",
 		},
 		{
 			name: "No items in order",
-			input: demotemporalorderprocessing.Order{
+			input: temporal.Order{
 				ID:        uuid.MustParse(dummyOrderID),
-				LineItems: []demotemporalorderprocessing.LineItem{},
+				LineItems: []temporal.LineItem{},
 			},
 			err: "order must have at least one item",
 		},
@@ -71,7 +71,7 @@ func (s *ActivityTestSuite) TestValidate_Fail() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			activities := &demotemporalorderprocessing.OrderActivities{}
+			activities := &temporal.OrderActivities{}
 			s.env.RegisterActivity(activities.Validate)
 
 			_, err := s.env.ExecuteActivity(activities.Validate, tt.input)

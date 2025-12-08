@@ -1,9 +1,9 @@
-package demotemporalorderprocessing_test
+package temporal_test
 
 import (
 	"testing"
 
-	demotemporalorderprocessing "github.com/pulinau/demo-temporal-order-processor"
+	"github.com/pulinau/demo-temporal-order-processor/internal/temporal"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
@@ -20,12 +20,12 @@ type WorkflowTestSuite struct {
 
 	env *testsuite.TestWorkflowEnvironment
 
-	activities *demotemporalorderprocessing.OrderActivities
+	activities *temporal.OrderActivities
 }
 
 func (s *WorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
-	s.activities = &demotemporalorderprocessing.OrderActivities{}
+	s.activities = &temporal.OrderActivities{}
 }
 
 func (s *WorkflowTestSuite) AfterTest(suiteName, testName string) {
@@ -34,10 +34,10 @@ func (s *WorkflowTestSuite) AfterTest(suiteName, testName string) {
 
 func (s *WorkflowTestSuite) TestWorkflow_Success() {
 	// Mock activity implementation
-	s.env.OnActivity(s.activities.Validate, mock.Anything, demotemporalorderprocessing.Order{}).Return(nil)
-	s.env.OnActivity(s.activities.Process, mock.Anything, demotemporalorderprocessing.Order{}).Return("PROCESSED", nil)
+	s.env.OnActivity(s.activities.Validate, mock.Anything, temporal.Order{}).Return(nil)
+	s.env.OnActivity(s.activities.Process, mock.Anything, temporal.Order{}).Return("PROCESSED", nil)
 
-	s.env.ExecuteWorkflow(demotemporalorderprocessing.ProccessOrder, demotemporalorderprocessing.Params{Order: demotemporalorderprocessing.Order{}})
+	s.env.ExecuteWorkflow(temporal.ProccessOrder, temporal.Params{Order: temporal.Order{}})
 
 	s.Require().NoError(s.env.GetWorkflowError())
 }

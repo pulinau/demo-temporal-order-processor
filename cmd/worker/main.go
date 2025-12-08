@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"os"
 
-	demotemporalorderprocessing "github.com/pulinau/demo-temporal-order-processor"
 	"github.com/pulinau/demo-temporal-order-processor/cmd/worker/config"
+	"github.com/pulinau/demo-temporal-order-processor/internal/temporal"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -38,10 +38,10 @@ func main() {
 	w := worker.New(c, cfg.Temporal.TaskQueueName, worker.Options{})
 
 	// inject HTTP client into the Activities Struct,
-	activities := &demotemporalorderprocessing.OrderActivities{}
+	activities := &temporal.OrderActivities{}
 
 	// Register Workflow and Activities
-	w.RegisterWorkflow(demotemporalorderprocessing.ProccessOrder)
+	w.RegisterWorkflow(temporal.ProccessOrder)
 	w.RegisterActivity(activities)
 
 	// Start the Worker

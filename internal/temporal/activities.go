@@ -1,4 +1,4 @@
-package demotemporalorderprocessing
+package temporal
 
 import (
 	"context"
