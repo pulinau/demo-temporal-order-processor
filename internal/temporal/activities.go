@@ -6,10 +6,18 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/pulinau/demo-temporal-order-processor/internal/integrations/inventory"
 	"github.com/shopspring/decimal"
 )
 
 type OrderActivities struct {
+	inventoryClient *inventory.Client
+}
+
+func NewOrderActivities(inventoryClient *inventory.Client) *OrderActivities {
+	return &OrderActivities{
+		inventoryClient: inventoryClient,
+	}
 }
 
 type Order struct {
@@ -30,6 +38,17 @@ func (a *OrderActivities) Validate(ctx context.Context, order Order) error {
 
 	if len(order.LineItems) < 1 {
 		return fmt.Errorf("order must have at least one item")
+	}
+
+	// Check inventory for each line item
+	for _, item := range order.LineItems {
+		available, err := a.inventoryClient.CheckInventory(ctx, item.ProductID, item.Quantity)
+		if err != nil {
+			return fmt.Errorf("failed to check inventory for product %s: %w", item.ProductID, err)
+		}
+		if !available {
+			return fmt.Errorf("insufficient inventory for product %s", item.ProductID)
+		}
 	}
 
 	return nil
