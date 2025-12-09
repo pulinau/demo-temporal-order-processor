@@ -1,0 +1,35 @@
+{
+  "name": "Inventory Check - Intermittent Failure (Retryable)",
+  "request": {
+    "method": "POST",
+    "urlPath": "/inventory/check",
+    "headers": {
+      "Content-Type": {
+        "equalTo": "application/json"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$.product_id"
+      },
+      {
+        "matchesJsonPath": "$.quantity"
+      }
+    ]
+  },
+  "response": {
+    "status": 503,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "available": false,
+      "message": "Service temporarily unavailable"
+    },
+    "fixedDelayMilliseconds": 100
+  },
+  "scenarioName": "IntermittentFailure",
+  "requiredScenarioState": "Started",
+  "newScenarioState": "SecondAttempt",
+  "priority": 0
+}

@@ -1,0 +1,31 @@
+{
+  "name": "Inventory Check - Non-Retryable Failure",
+  "request": {
+    "method": "POST",
+    "urlPath": "/inventory/check",
+    "headers": {
+      "Content-Type": {
+        "equalTo": "application/json"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$.product_id"
+      },
+      {
+        "matchesJsonPath": "$.quantity"
+      }
+    ]
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "available": false,
+      "message": "Invalid product ID or product not found"
+    }
+  },
+  "priority": 0
+}

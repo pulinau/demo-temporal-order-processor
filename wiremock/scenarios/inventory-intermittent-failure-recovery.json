@@ -1,0 +1,34 @@
+{
+  "name": "Inventory Check - Intermittent Failure Recovery",
+  "request": {
+    "method": "POST",
+    "urlPath": "/inventory/check",
+    "headers": {
+      "Content-Type": {
+        "equalTo": "application/json"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$.product_id"
+      },
+      {
+        "matchesJsonPath": "$.quantity"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "available": true,
+      "message": "Product is in stock (recovered after retry)"
+    }
+  },
+  "scenarioName": "IntermittentFailure",
+  "requiredScenarioState": "SecondAttempt",
+  "newScenarioState": "Started",
+  "priority": 0
+}

@@ -1,0 +1,31 @@
+{
+  "name": "Inventory Check - Success Scenario",
+  "request": {
+    "method": "POST",
+    "urlPath": "/inventory/check",
+    "headers": {
+      "Content-Type": {
+        "equalTo": "application/json"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$.product_id"
+      },
+      {
+        "matchesJsonPath": "$.quantity"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "available": true,
+      "message": "Product is in stock"
+    }
+  },
+  "priority": 1
+}
