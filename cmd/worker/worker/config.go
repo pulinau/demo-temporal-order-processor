@@ -1,6 +1,6 @@
-package config
+package worker
 
-type WorkerConfig struct {
+type Config struct {
 	Temporal TemporalConfig
 }
 

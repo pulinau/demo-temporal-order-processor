@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/pulinau/demo-temporal-order-processor/cmd/worker/config"
+	worker1 "github.com/pulinau/demo-temporal-order-processor/cmd/worker/worker"
 	"github.com/pulinau/demo-temporal-order-processor/internal/temporal"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -15,8 +15,8 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
 	//TODO: Read config from YAAL.
-	cfg := config.WorkerConfig{
-		Temporal: config.TemporalConfig{
+	cfg := worker1.Config{
+		Temporal: worker1.TemporalConfig{
 			Host:          "localhost",
 			Port:          7233,
 			TaskQueueName: "order-proccesor-queue",
