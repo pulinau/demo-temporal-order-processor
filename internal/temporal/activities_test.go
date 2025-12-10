@@ -1,11 +1,14 @@
 package temporal_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/pulinau/demo-temporal-order-processor/internal/temporal"
+	temporalmocks "github.com/pulinau/demo-temporal-order-processor/internal/temporal/mocks"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
 )
@@ -28,10 +31,17 @@ func (s *ActivityTestSuite) SetupTest() {
 }
 
 func (s *ActivityTestSuite) TestValidate_Success() {
-	activities := &temporal.OrderActivities{}
+	// Setup
+	inventoryChecker := temporalmocks.NewMockInventoryChecker(s.T())
+	inventoryChecker.EXPECT().
+		CheckInventory(mock.Anything, uuid.MustParse("ba320a5d-62ed-46d0-b491-084514598721"), int32(1)).
+		Return(true, nil)
+
+	activities := temporal.NewOrderActivities(inventoryChecker)
 	s.env.RegisterActivity(activities.Validate)
 
-	in := temporal.Order{
+	// Invoke
+	_, err := s.env.ExecuteActivity(activities.Validate, temporal.Order{
 		ID: uuid.MustParse(dummyOrderID),
 		LineItems: []temporal.LineItem{
 			{
@@ -40,10 +50,9 @@ func (s *ActivityTestSuite) TestValidate_Success() {
 				PricePerItem: decimal.RequireFromString("123.45"),
 			},
 		},
-	}
+	})
 
-	_, err := s.env.ExecuteActivity(activities.Validate, in)
-
+	// Assert
 	s.Require().NoError(err)
 }
 
@@ -52,6 +61,7 @@ func (s *ActivityTestSuite) TestValidate_Fail() {
 	tests := []struct {
 		name  string
 		input temporal.Order
+		setupMocks func(t *testing.T, mockIC *temporalmocks.MockInventoryChecker)
 		err   string
 	}{
 		{
@@ -67,15 +77,57 @@ func (s *ActivityTestSuite) TestValidate_Fail() {
 			},
 			err: "order must have at least one item",
 		},
+		{
+			name: "No inventory for line item",
+			input: temporal.Order{
+				ID: uuid.MustParse(dummyOrderID),
+				LineItems: []temporal.LineItem{
+					{
+						ProductID:    uuid.MustParse("ba320a5d-62ed-46d0-b491-084514598721"),
+						Quantity:     1,
+						PricePerItem: decimal.RequireFromString("123.45"),
+					},
+				},
+			},
+			setupMocks: func(t *testing.T, mockIC *temporalmocks.MockInventoryChecker) {
+				mockIC.EXPECT().CheckInventory(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
+			},
+			err: "insufficient inventory for product",
+		},
+		{
+			name: "Inventory checker error",
+			input: temporal.Order{
+				ID: uuid.MustParse(dummyOrderID),
+				LineItems: []temporal.LineItem{
+					{
+						ProductID:    uuid.MustParse("ba320a5d-62ed-46d0-b491-084514598721"),
+						Quantity:     1,
+						PricePerItem: decimal.RequireFromString("123.45"),
+					},
+				},
+			},
+			setupMocks: func(t *testing.T, mockIC *temporalmocks.MockInventoryChecker) {
+				mockIC.EXPECT().CheckInventory(mock.Anything, mock.Anything, mock.Anything).Return(false, errors.New("test error"))
+			},
+			err: "failed to check inventory for product",
+		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			activities := &temporal.OrderActivities{}
+			// Setup
+			inventoryChecker := temporalmocks.NewMockInventoryChecker(s.T())
+			if tt.setupMocks != nil {
+				tt.setupMocks(s.T(), inventoryChecker)
+			}
+
+			activities := temporal.NewOrderActivities(inventoryChecker)
 			s.env.RegisterActivity(activities.Validate)
 
+			// Invoke
 			_, err := s.env.ExecuteActivity(activities.Validate, tt.input)
 
+			// Assert
 			s.Require().ErrorContains(err, tt.err)
 		})
 	}

@@ -1,0 +1,9 @@
+all: false
+dir: '{{.InterfaceDir}}/mocks'
+filename: '{{.InterfaceName | snakecase}}.go'
+structname: '{{.Mock}}{{.InterfaceName}}'
+pkgname: '{{.SrcPackageName}}mocks'
+packages:
+  github.com/pulinau/demo-temporal-order-processor/internal/temporal:
+    config:
+      all: true

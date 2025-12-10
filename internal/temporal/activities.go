@@ -6,15 +6,18 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/pulinau/demo-temporal-order-processor/internal/integrations/inventory"
 	"github.com/shopspring/decimal"
 )
 
-type OrderActivities struct {
-	inventoryClient *inventory.Client
+type InventoryChecker interface {
+	CheckInventory(context.Context, uuid.UUID, int32) (bool, error)
 }
 
-func NewOrderActivities(inventoryClient *inventory.Client) *OrderActivities {
+type OrderActivities struct {
+	inventoryClient InventoryChecker
+}
+
+func NewOrderActivities(inventoryClient InventoryChecker) *OrderActivities {
 	return &OrderActivities{
 		inventoryClient: inventoryClient,
 	}

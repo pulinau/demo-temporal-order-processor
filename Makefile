@@ -24,3 +24,7 @@ cover: test
 .PHONY: worker.start
 worker.start:
 	go run cmd/worker/main.go
+
+.PHONY: generate.mocks
+generate.mocks:
+	mockery --config ./.mockery.yml
