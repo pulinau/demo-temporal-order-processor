@@ -48,4 +48,4 @@ worker.deps.restart: worker.deps.stop worker.deps.start
 
 .PHONY: worker.start
 worker.start:
-	go run cmd/worker/main.go
+	go run cmd/worker/main.go -config="./config/worker/local/config.yaml"

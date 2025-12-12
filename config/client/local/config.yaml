@@ -1,0 +1,4 @@
+temporal:
+  host: localhost
+  port: 7233
+  taskQueueName: order-proccesor-queue

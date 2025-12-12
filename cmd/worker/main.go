@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -15,16 +16,17 @@ import (
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
-	//TODO: Read config from YAAL.
-	cfg := config.Config{
-		Temporal: temporal.Config{
-			Host:          "localhost",
-			Port:          7233,
-			TaskQueueName: "order-proccesor-queue",
-		},
-		InventoryAPI: inventory.Config{
-			BaseURL: "http://localhost:8080",
-		},
+	configPath := flag.String("config", "", "path to config file")
+	flag.Parse()
+
+	if *configPath == "" {
+		*configPath = "./config/worker/local/config.yaml"
+	}
+
+	cfg, err := config.LoadConfig(*configPath)
+	if err != nil {
+		slog.Error("Unable to load config", "error", err)
+		os.Exit(1)
 	}
 
 	// Create the Temporal client,

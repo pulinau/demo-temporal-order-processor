@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -17,19 +18,24 @@ import (
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
-	if len(os.Args) <= 1 {
-		slog.Error("json payload required as command-line argument")
+	configPath := flag.String("config", "", "path to config file")
+	orderPayload := flag.String("order", "", "json order payload")
+	flag.Parse()
+
+	if *configPath == "" {
+		*configPath = "./config/client/local/config.yaml"
+	}
+
+	if *orderPayload == "" {
+		slog.Error("json order payload is required")
+		flag.Usage()
 		os.Exit(1)
 	}
-	orderPayload := os.Args[1]
 
-	//TODO: Read config from YAAL.
-	cfg := config.Config{
-		Temporal: temporal.Config{
-			Host:          "localhost",
-			Port:          7233,
-			TaskQueueName: "order-proccesor-queue",
-		},
+	cfg, err := config.LoadConfig(*configPath)
+	if err != nil {
+		slog.Error("Unable to load config", "error", err)
+		os.Exit(1)
 	}
 
 	c, err := client.Dial(client.Options{
@@ -50,9 +56,10 @@ func main() {
 	}
 
 	var order temporal.Order
-	err = json.Unmarshal([]byte(orderPayload), &order)
+	err = json.Unmarshal([]byte(*orderPayload), &order)
 	if err != nil {
 		slog.Error("Unable to unmarshall payload into order struct", "error", err)
+		os.Exit(2)
 	}
 
 	we, err := c.ExecuteWorkflow(context.Background(), options, temporal.ProccessOrder, temporal.Params{
