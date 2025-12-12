@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"go.temporal.io/sdk/temporal"
 )
 
 type InventoryChecker interface {
@@ -24,14 +25,14 @@ func NewOrderActivities(inventoryClient InventoryChecker) *OrderActivities {
 }
 
 type Order struct {
-	ID        uuid.UUID
-	LineItems []LineItem
+	ID        uuid.UUID  `json:"id"`
+	LineItems []LineItem `json:"line_items"`
 }
 
 type LineItem struct {
-	ProductID    uuid.UUID
-	Quantity     int32
-	PricePerItem decimal.Decimal
+	ProductID    uuid.UUID       `json:"product_id"`
+	Quantity     int32           `json:"quantity"`
+	PricePerItem decimal.Decimal `json:"price_per_item"`
 }
 
 func (a *OrderActivities) Validate(ctx context.Context, order Order) error {
@@ -50,7 +51,11 @@ func (a *OrderActivities) Validate(ctx context.Context, order Order) error {
 			return fmt.Errorf("failed to check inventory for product %s: %w", item.ProductID, err)
 		}
 		if !available {
-			return fmt.Errorf("insufficient inventory for product %s", item.ProductID)
+			return temporal.NewNonRetryableApplicationError(
+				"insufficient inventory for product",
+				"validation",
+				fmt.Errorf("insufficient inventory for product %s", item.ProductID),
+			)
 		}
 	}
 

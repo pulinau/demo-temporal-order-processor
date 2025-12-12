@@ -1,6 +1,8 @@
 COVERAGE_OUT ?= bin/coverage.out
 COVERAGE_HTML ?= bin/coverage.html
 
+DOCKER_COMPOSE_FILE := ./docker-compose.yml
+
 bin:
 	@mkdir -p bin
 
@@ -23,6 +25,7 @@ cover: test
 
 .PHONY: worker.start
 worker.start:
+	docker compose -f $(DOCKER_COMPOSE_FILE) up -d
 	go run cmd/worker/main.go
 
 .PHONY: generate.mocks

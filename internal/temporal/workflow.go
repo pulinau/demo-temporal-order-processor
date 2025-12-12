@@ -12,12 +12,12 @@ type Params struct {
 }
 
 func ProccessOrder(ctx workflow.Context, in Params) error {
-
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			MaximumInterval:    time.Minute,
+			MaximumAttempts:    4,
 			BackoffCoefficient: 2,
 		},
 	})

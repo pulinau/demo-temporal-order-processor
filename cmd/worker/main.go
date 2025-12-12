@@ -5,7 +5,8 @@ import (
 	"log/slog"
 	"os"
 
-	worker1 "github.com/pulinau/demo-temporal-order-processor/cmd/worker/worker"
+	config "github.com/pulinau/demo-temporal-order-processor/cmd/worker/config"
+	"github.com/pulinau/demo-temporal-order-processor/internal/integrations/inventory"
 	"github.com/pulinau/demo-temporal-order-processor/internal/temporal"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -15,11 +16,14 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
 	//TODO: Read config from YAAL.
-	cfg := worker1.Config{
-		Temporal: worker1.TemporalConfig{
+	cfg := config.Config{
+		Temporal: temporal.Config{
 			Host:          "localhost",
 			Port:          7233,
 			TaskQueueName: "order-proccesor-queue",
+		},
+		InventoryAPI: inventory.Config{
+			BaseURL: "http://localhost:8080",
 		},
 	}
 
@@ -29,7 +33,7 @@ func main() {
 		Logger:   slog.Default(),
 	})
 	if err != nil {
-		slog.Error("Unable to create Temporal client")
+		slog.Error("Unable to create Temporal client", "error", err)
 		os.Exit(1)
 	}
 	defer c.Close()
@@ -38,7 +42,7 @@ func main() {
 	w := worker.New(c, cfg.Temporal.TaskQueueName, worker.Options{})
 
 	// inject HTTP client into the Activities Struct,
-	activities := &temporal.OrderActivities{}
+	activities := temporal.NewOrderActivities(inventory.NewClient(cfg.InventoryAPI.BaseURL))
 
 	// Register Workflow and Activities
 	w.RegisterWorkflow(temporal.ProccessOrder)
@@ -46,7 +50,7 @@ func main() {
 
 	// Start the Worker
 	if err := w.Run(worker.InterruptCh()); err != nil {
-		slog.Default().Error("Unable to start Temporal worker")
+		slog.Default().Error("Unable to start Temporal worker", "error", err)
 		os.Exit(1)
 	}
 

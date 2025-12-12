@@ -59,10 +59,10 @@ func (s *ActivityTestSuite) TestValidate_Success() {
 func (s *ActivityTestSuite) TestValidate_Fail() {
 
 	tests := []struct {
-		name  string
-		input temporal.Order
+		name       string
+		input      temporal.Order
 		setupMocks func(t *testing.T, mockIC *temporalmocks.MockInventoryChecker)
-		err   string
+		err        string
 	}{
 		{
 			name:  "Missing order ID",

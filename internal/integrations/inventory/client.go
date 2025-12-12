@@ -12,6 +12,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type Config struct {
+	BaseURL string
+}
+
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
