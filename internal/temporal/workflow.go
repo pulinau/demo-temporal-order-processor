@@ -30,18 +30,26 @@ var (
 	}
 )
 
+// Define signals.
+const (
+	pickOrderSignal      = "pickOrder"
+	shipOrderSignal      = "shipOrder"
+	orderDeliveredSignal = "markOrderAsDelivered"
+	cancelOrderSignal    = "cancelOrder"
+)
+
 type Params struct {
 	Order Order
 }
 
-func ProccessOrder(ctx workflow.Context, in Params) error {
+func ProccessOrder(ctx workflow.Context, in Params) (OrderStatus, error) {
 	var orderStatus OrderStatus
 
-	err := workflow.SetQueryHandler(ctx, GetOrderStatus, func() (OrderStatus, error) {
+	err := workflow.SetQueryHandler(ctx, "GetOrderStatus", func() (OrderStatus, error) {
 		return orderStatus, nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to setup query handler: %w", err)
+		return orderStatus, fmt.Errorf("failed to setup query handler: %w", err)
 	}
 
 	// Validate order and items.
@@ -51,10 +59,30 @@ func ProccessOrder(ctx workflow.Context, in Params) error {
 	err = workflow.ExecuteActivity(ctx, orderActivities.Validate, in.Order).Get(ctx, nil)
 	if err != nil {
 		orderStatus = UnableToComplete
-		return err
+		return orderStatus, err
 	}
-
 	orderStatus = Placed
+
+	// Wait for order picked or order cancelled signals.
+	pickOrderCh := workflow.GetSignalChannel(ctx, pickOrderSignal)
+	cancelOrderCh := workflow.GetSignalChannel(ctx, cancelOrderSignal)
+
+	selector := workflow.NewSelector(ctx)
+	selector.AddReceive(pickOrderCh, func(c workflow.ReceiveChannel, more bool) {
+		c.Receive(ctx, nil)
+		orderStatus = Picked
+	})
+	selector.AddReceive(cancelOrderCh, func(c workflow.ReceiveChannel, more bool) {
+		c.Receive(ctx, nil)
+		orderStatus = Cancelled
+	})
+
+	// Blocks until signal is received.
+	selector.Select(ctx)
+	if orderStatus == Cancelled {
+		workflow.GetLogger(ctx).Warn("Received cancellation signal")
+		return orderStatus, nil
+	}
 
 	// Process order.
 	ctx = workflow.WithActivityOptions(ctx, defaultActivityOptions)
@@ -62,12 +90,17 @@ func ProccessOrder(ctx workflow.Context, in Params) error {
 	err = workflow.ExecuteActivity(ctx, orderActivities.Process, in.Order).Get(ctx, &status)
 	if err != nil {
 		orderStatus = UnableToComplete
-		return err
+		return orderStatus, err
 	}
-
 	workflow.GetLogger(ctx).Info("Order processed", "status", status)
 
-	orderStatus = Comopleted
+	// Wait for order to be shipped.
+	workflow.GetSignalChannel(ctx, shipOrderSignal).Receive(ctx, nil)
+	orderStatus = Shipped
 
-	return nil
+	// Wait for order to be marked as delivered.
+	workflow.GetSignalChannel(ctx, orderDeliveredSignal).Receive(ctx, nil)
+	orderStatus = Completed
+
+	return orderStatus, nil
 }
