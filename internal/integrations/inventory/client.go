@@ -13,7 +13,7 @@ import (
 )
 
 type Config struct {
-	BaseURL string
+	BaseURL string `yaml:"baseUrl" validate:"required,http_url"`
 }
 
 type Client struct {

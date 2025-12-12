@@ -3,5 +3,5 @@ temporal:
   port: 7233
   taskQueueName: order-proccesor-queue
 
-inventoryAPI:
-  baseURL: http://localhost:8080
+inventoryApi:
+  baseUrl: http://localhost:8080
