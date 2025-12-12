@@ -14,3 +14,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  temporal:
+    image: temporalio/temporal:1.5.1
+    container_name: temporal-server
+    command:
+      - "server"
+      - "start-dev"
+      - "--ip"
+      - "0.0.0.0"
+    ports:
+      - "7233:7233" # Server Frontend for clients/workers
+      - "8233:8233" # Temporal Web UI

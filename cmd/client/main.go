@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -31,7 +32,10 @@ func main() {
 		},
 	}
 
-	c, err := client.Dial(client.Options{})
+	c, err := client.Dial(client.Options{
+		HostPort: fmt.Sprintf("%s:%d", cfg.Temporal.Host, cfg.Temporal.Port),
+		Logger:   slog.Default(),
+	})
 	if err != nil {
 		slog.Error("Unable to create client", "error", err)
 		os.Exit(1)
