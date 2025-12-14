@@ -43,6 +43,8 @@ type Params struct {
 }
 
 func ProccessOrder(ctx workflow.Context, in Params) (OrderStatus, error) {
+	logger := workflow.GetLogger(ctx)
+
 	var orderStatus OrderStatus
 
 	err := workflow.SetQueryHandler(ctx, "GetOrderStatus", func() (OrderStatus, error) {
@@ -70,6 +72,8 @@ func ProccessOrder(ctx workflow.Context, in Params) (OrderStatus, error) {
 	selector := workflow.NewSelector(ctx)
 	selector.AddReceive(pickOrderCh, func(c workflow.ReceiveChannel, more bool) {
 		c.Receive(ctx, nil)
+		now := workflow.Now(ctx)
+		logger.Info("Order picked at %s", now.Format("2006-01-02 15:04:05"))
 		orderStatus = Picked
 	})
 	selector.AddReceive(cancelOrderCh, func(c workflow.ReceiveChannel, more bool) {
@@ -92,7 +96,7 @@ func ProccessOrder(ctx workflow.Context, in Params) (OrderStatus, error) {
 		orderStatus = UnableToComplete
 		return orderStatus, err
 	}
-	workflow.GetLogger(ctx).Info("Order processed", "status", status)
+	logger.Info("Order processed", "status", status)
 
 	// Wait for order to be shipped.
 	workflow.GetSignalChannel(ctx, shipOrderSignal).Receive(ctx, nil)
