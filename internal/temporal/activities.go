@@ -2,7 +2,6 @@ package temporal
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -63,5 +62,7 @@ func (a *OrderActivities) Validate(ctx context.Context, order Order) error {
 }
 
 func (a *OrderActivities) Process(ctx context.Context, order Order) (string, error) {
-	return "", errors.New("not implemented")
+	// TODO: add order processing logic.
+
+	return "Processed", nil
 }
