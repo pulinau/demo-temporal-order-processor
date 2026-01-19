@@ -48,6 +48,7 @@ func main() {
 
 	// Register Workflow and Activities
 	w.RegisterWorkflow(temporal.ProccessOrder)
+	w.RegisterWorkflow(temporal.ProcessPayment)
 	w.RegisterActivity(activities)
 
 	// Start the Worker

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
@@ -89,14 +90,19 @@ func ProccessOrder(ctx workflow.Context, in Params) (OrderStatus, error) {
 	}
 
 	// Process order.
-	ctx = workflow.WithActivityOptions(ctx, defaultActivityOptions)
-	var status string
-	err = workflow.ExecuteActivity(ctx, orderActivities.Process, in.Order).Get(ctx, &status)
-	if err != nil {
+	var payID uuid.UUID
+	if err = workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
+		return uuid.New()
+	}).Get(&payID); err != nil {
 		orderStatus = UnableToComplete
-		return orderStatus, err
+		return orderStatus, nil
 	}
-	logger.Info("Order processed", "status", status)
+
+	future := workflow.ExecuteChildWorkflow(ctx, ProcessPayment, PaymentDetails{
+		PayID:  payID,
+		Amount: 100.0, // TODO: calculate amount.
+	})
+	err = future.Get(ctx, nil)
 
 	// Wait for order to be shipped.
 	workflow.GetSignalChannel(ctx, shipOrderSignal).Receive(ctx, nil)
@@ -107,4 +113,17 @@ func ProccessOrder(ctx workflow.Context, in Params) (OrderStatus, error) {
 	orderStatus = Completed
 
 	return orderStatus, nil
+}
+
+type PaymentDetails struct {
+	PayID  uuid.UUID
+	Amount float64
+}
+
+func ProcessPayment(ctx workflow.Context, in PaymentDetails) error {
+	// TODO: add payment processing logic.
+	workflow.GetLogger(ctx).Info("Did some processing and recieved the payment")
+
+	return nil
+
 }
