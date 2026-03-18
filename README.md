@@ -10,27 +10,32 @@ execution, signal handling, and retry policies.
  
  ## Setup
  
- ### 1. Install Development Tools
+ ### 1. Clone Project & Install Development Tools
  
  This project uses `mise` to manage Go and mockery versions:
  
  ```bash
  # Install mise (if not already installed)
- curl https://mise.run | sh
+ brew install mise
  
- # Install project tools (Go 1.25.5 and mockery 3.6.1)
+ # Clone and install project tools (Go 1.25.5 and mockery 3.6.1)
+ git clone https://github.com/pulinau/demo-temporal-order-processor.git
+ cd demo-temporal-order-processing
  mise install
  ```
+
+ > [!INFO]
+ > You can manually install Go and the development tools. Refer to `tool-versions.toml` for the correct versions of each tool.
  
  ### 2. Install Dependencies
  
- ```bash
+ ```sh
  go mod download
  ```
  
  ### 3. Start Services
  
- ```bash
+ ```sh
  # Start Temporal server and WireMock
  make worker.deps.start
  ```
@@ -39,6 +44,12 @@ execution, signal handling, and retry policies.
  - **Temporal Server**: `localhost:7233`
  - **Temporal Web UI**: http://localhost:8233
  - **WireMock (Inventory API)**: http://localhost:8080
+
+ > [!HINT]
+ > To stop the services after running:
+ > ```sh
+ > make worker.deps.stop
+ > ```
  
  ## Running the Application
  
@@ -136,9 +147,6 @@ execution, signal handling, and retry policies.
  
  # Generate mocks
  make generate.mocks
- 
- # Stop services
- make worker.deps.stop
  ```
  
  ## Project Structure
